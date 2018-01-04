@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::HashMap;
 
 fn read(path: &str) -> String {
     use std::fs::File;
@@ -16,7 +16,7 @@ struct Rating {
     count: u32,
 }
 
-type RatingsById<'a> = BTreeMap<&'a str, Rating>;
+type RatingsById<'a> = HashMap<&'a str, Rating>;
 
 #[derive(Debug)]
 struct PartialEpisode<'a> {
@@ -25,7 +25,7 @@ struct PartialEpisode<'a> {
     episode_number: Option<u32>,
 }
 
-type PartialEpisodesById<'a> = BTreeMap<&'a str, PartialEpisode<'a>>;
+type PartialEpisodesById<'a> = HashMap<&'a str, PartialEpisode<'a>>;
 
 #[derive(Debug)]
 struct Series<'a> {
@@ -39,7 +39,7 @@ struct Series<'a> {
     episodes: Vec<Episode<'a>>,
 }
 
-type SeriesById<'a> = BTreeMap<&'a str, Series<'a>>;
+type SeriesById<'a> = HashMap<&'a str, Series<'a>>;
 
 #[derive(Debug)]
 struct Episode<'a> {
