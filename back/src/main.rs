@@ -21,8 +21,8 @@ type RatingsById<'a> = HashMap<&'a str, Rating>;
 #[derive(Debug)]
 struct PartialEpisode<'a> {
     series_id: &'a str,
-    season_number: Option<u32>,
-    episode_number: Option<u32>,
+    season_number: u32,
+    episode_number: u32,
 }
 
 type PartialEpisodesById<'a> = HashMap<&'a str, PartialEpisode<'a>>;
@@ -48,8 +48,8 @@ struct Episode<'a> {
     original_title: &'a str,
     start_year: Option<u32>,
     end_year: Option<u32>,
-    season_number: Option<u32>,
-    episode_number: Option<u32>,
+    season_number: u32,
+    episode_number: u32,
     rating: Option<&'a Rating>,
 }
 
@@ -77,17 +77,17 @@ fn main() {
         .trim()
         .split('\n')
         .skip(1)
-        .map(|line| {
+        .filter_map(|line| {
             let mut parts = line.trim().split('\t');
             let mut n = || parts.next().unwrap();
-            (
+            Some((
                 n(),
                 PartialEpisode {
                     series_id: n(),
-                    season_number: n().parse().ok(),
-                    episode_number: n().parse().ok(),
+                    season_number: n().parse().ok()?,
+                    episode_number: n().parse().ok()?,
                 },
-            )
+            ))
         })
         .collect();
 
@@ -160,13 +160,13 @@ fn main() {
         .map(|(_, series)| series)
         .collect::<Vec<_>>();
 
-    // We only care about the series which have episodes and all of them have a rating,
-    // season_number, and episode_number.
+    // We only care about the series which have at least one episode with a rating.
     series.retain(|series| {
-        !series.episodes.is_empty() && series.episodes.iter().all(|episode| {
-            episode.rating.is_some() && episode.season_number.is_some()
-                && episode.episode_number.is_some()
-        })
+        series
+            .episodes
+            .iter()
+            .filter(|episode| episode.rating.is_some())
+            .count() >= 1
     });
 
     eprintln!("series.len() = {:#?}", series.len());
