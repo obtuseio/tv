@@ -27,6 +27,19 @@ struct PartialEpisode<'a> {
 
 type PartialEpisodesById<'a> = BTreeMap<&'a str, PartialEpisode<'a>>;
 
+#[derive(Debug)]
+struct Series<'a> {
+    id: &'a str,
+    primary_title: &'a str,
+    original_title: &'a str,
+    start_year: Option<u32>,
+    end_year: Option<u32>,
+    genres: Vec<&'a str>,
+    rating: Option<&'a Rating>,
+}
+
+type SeriesById<'a> = BTreeMap<&'a str, Series<'a>>;
+
 fn main() {
     let string = read("data/title.ratings.tsv");
     let ratings_by_id: RatingsById = string
@@ -62,6 +75,40 @@ fn main() {
                     episode_number: n().parse().ok(),
                 },
             )
+        })
+        .collect();
+
+    let string = read("data/title.basics.tsv");
+    let series_by_id: SeriesById = string
+        .trim()
+        .split('\n')
+        .skip(1)
+        .filter_map(|line| {
+            let mut parts = line.trim().split('\t');
+            let mut n = || parts.next().unwrap();
+            let id = n();
+            let type_ = n();
+            match type_ {
+                "tvSeries" => Some((
+                    id,
+                    Series {
+                        id: id,
+                        primary_title: n(),
+                        original_title: n(),
+                        start_year: {
+                            n();
+                            n().parse().ok()
+                        },
+                        end_year: n().parse().ok(),
+                        genres: {
+                            n();
+                            n().split(',').collect()
+                        },
+                        rating: ratings_by_id.get(&id),
+                    },
+                )),
+                _ => None,
+            }
         })
         .collect();
 }
