@@ -1,3 +1,39 @@
+use std::collections::BTreeMap;
+
+fn read(path: &str) -> String {
+    use std::fs::File;
+    use std::io::Read;
+
+    let mut file = File::open(path).unwrap();
+    let mut string = String::new();
+    file.read_to_string(&mut string).unwrap();
+    string
+}
+
+#[derive(Debug)]
+struct Rating {
+    average: f32,
+    count: u32,
+}
+
+type RatingsById<'a> = BTreeMap<&'a str, Rating>;
+
 fn main() {
-    println!("Hello, world!");
+    let string = read("data/title.ratings.tsv");
+    let ratings_by_id: RatingsById = string
+        .trim()
+        .split('\n')
+        .skip(1)
+        .map(|line| {
+            let mut parts = line.trim().split('\t');
+            let mut n = || parts.next().unwrap();
+            (
+                n(),
+                Rating {
+                    average: n().parse().unwrap(),
+                    count: n().parse().unwrap(),
+                },
+            )
+        })
+        .collect();
 }
