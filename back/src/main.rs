@@ -160,13 +160,13 @@ fn main() {
         .map(|(_, series)| series)
         .collect::<Vec<_>>();
 
-    // We only care about the series which have episodes and all of them have a rating.
+    // We only care about the series which have episodes and all of them have a rating,
+    // season_number, and episode_number.
     series.retain(|series| {
-        !series.episodes.is_empty()
-            && series
-                .episodes
-                .iter()
-                .all(|episode| episode.rating.is_some())
+        !series.episodes.is_empty() && series.episodes.iter().all(|episode| {
+            episode.rating.is_some() && episode.season_number.is_some()
+                && episode.episode_number.is_some()
+        })
     });
 
     eprintln!("series.len() = {:#?}", series.len());
