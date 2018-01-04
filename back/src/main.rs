@@ -35,7 +35,7 @@ struct Series<'a> {
     start_year: Option<u32>,
     end_year: Option<u32>,
     genres: Vec<&'a str>,
-    rating: Option<&'a Rating>,
+    rating: &'a Rating,
     episodes: Vec<Episode<'a>>,
 }
 
@@ -117,7 +117,7 @@ fn main() {
                             n();
                             n().split(',').collect()
                         },
-                        rating: ratings_by_id.get(&id),
+                        rating: ratings_by_id.get(&id)?,
                         episodes: Vec::new(),
                     },
                 )),
