@@ -155,8 +155,19 @@ fn main() {
         }
     });
 
-    let series = series_by_id
+    let mut series = series_by_id
         .into_iter()
         .map(|(_, series)| series)
         .collect::<Vec<_>>();
+
+    // We only care about the series which have episodes and all of them have a rating.
+    series.retain(|series| {
+        !series.episodes.is_empty()
+            && series
+                .episodes
+                .iter()
+                .all(|episode| episode.rating.is_some())
+    });
+
+    eprintln!("series.len() = {:#?}", series.len());
 }
