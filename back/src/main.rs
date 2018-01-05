@@ -14,7 +14,7 @@ fn read(path: &str) -> String {
 
 #[derive(Debug)]
 struct Rating {
-    average: f32,
+    average: f64,
     count: u32,
 }
 
