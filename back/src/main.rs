@@ -1,3 +1,8 @@
+extern crate serde;
+
+#[macro_use]
+extern crate serde_derive;
+
 #[macro_use]
 extern crate serde_json;
 
@@ -12,10 +17,10 @@ fn read(path: &str) -> String {
     string
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 struct Rating {
-    average: f64,
-    count: u32,
+    #[serde(rename = "a")] average: f64,
+    #[serde(rename = "c")] count: u32,
 }
 
 type RatingsById<'a> = HashMap<&'a str, Rating>;
@@ -29,30 +34,30 @@ struct PartialEpisode<'a> {
 
 type PartialEpisodesById<'a> = HashMap<&'a str, PartialEpisode<'a>>;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 struct Series<'a> {
     id: &'a str,
-    primary_title: &'a str,
-    original_title: &'a str,
-    start_year: Option<u32>,
-    end_year: Option<u32>,
-    genres: Vec<&'a str>,
-    rating: &'a Rating,
-    episodes: Vec<Episode<'a>>,
+    #[serde(rename = "pt")] primary_title: &'a str,
+    #[serde(rename = "ot")] original_title: &'a str,
+    #[serde(rename = "sy")] start_year: Option<u32>,
+    #[serde(rename = "ey")] end_year: Option<u32>,
+    #[serde(rename = "g")] genres: Vec<&'a str>,
+    #[serde(rename = "r")] rating: &'a Rating,
+    #[serde(rename = "es")] episodes: Vec<Episode<'a>>,
 }
 
 type SeriesById<'a> = HashMap<&'a str, Series<'a>>;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 struct Episode<'a> {
     id: &'a str,
-    primary_title: &'a str,
-    original_title: &'a str,
-    start_year: Option<u32>,
-    end_year: Option<u32>,
-    season_number: u32,
-    episode_number: u32,
-    rating: Option<&'a Rating>,
+    #[serde(rename = "pt")] primary_title: &'a str,
+    #[serde(rename = "ot")] original_title: &'a str,
+    #[serde(rename = "sy")] start_year: Option<u32>,
+    #[serde(rename = "ey")] end_year: Option<u32>,
+    #[serde(rename = "sn")] season_number: u32,
+    #[serde(rename = "en")] episode_number: u32,
+    #[serde(rename = "r")] rating: Option<&'a Rating>,
 }
 
 fn main() {
@@ -191,4 +196,10 @@ fn main() {
 
     let mut file = File::create("data/series.json").unwrap();
     write!(&mut file, "{}", json).unwrap();
+
+    std::fs::create_dir_all("data/series").unwrap();
+    for s in series {
+        let mut file = File::create(format!("data/series/{}.json", s.id)).unwrap();
+        serde_json::to_writer(&mut file, &s).unwrap();
+    }
 }
