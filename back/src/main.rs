@@ -39,7 +39,7 @@ struct Series<'a> {
     id: &'a str,
     #[serde(rename = "pt")] primary_title: &'a str,
     #[serde(rename = "ot")] original_title: &'a str,
-    #[serde(rename = "sy")] start_year: Option<u32>,
+    #[serde(rename = "sy")] start_year: u32,
     #[serde(rename = "ey")] end_year: Option<u32>,
     #[serde(rename = "g")] genres: Vec<&'a str>,
     #[serde(rename = "r")] rating: &'a Rating,
@@ -117,7 +117,7 @@ fn main() {
                         original_title: n(),
                         start_year: {
                             n();
-                            n().parse().ok()
+                            n().parse().ok()?
                         },
                         end_year: n().parse().ok(),
                         genres: {
