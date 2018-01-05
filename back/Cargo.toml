@@ -5,3 +5,4 @@ authors = ["Utkarsh Kukreti <utkarshkukreti@gmail.com>"]
 build = "build.rs"
 
 [dependencies]
+serde_json = "1.0"

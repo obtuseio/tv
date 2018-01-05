@@ -1,9 +1,11 @@
+#[macro_use]
+extern crate serde_json;
+
 use std::collections::HashMap;
+use std::io::{Read, Write};
+use std::fs::File;
 
 fn read(path: &str) -> String {
-    use std::fs::File;
-    use std::io::Read;
-
     let mut file = File::open(path).unwrap();
     let mut string = String::new();
     file.read_to_string(&mut string).unwrap();
@@ -170,4 +172,23 @@ fn main() {
     });
 
     eprintln!("series.len() = {:#?}", series.len());
+
+    let json = json!(
+        series
+            .iter()
+            .map(|s| json!({
+                "id": s.id,
+                "pt": s.primary_title,
+                "sy": s.start_year,
+                "ey": s.end_year,
+                "r": {
+                    "a": s.rating.average,
+                    "c": s.rating.count,
+                },
+            }))
+            .collect::<Vec<_>>()
+    );
+
+    let mut file = File::create("data/series.json").unwrap();
+    write!(&mut file, "{}", json).unwrap();
 }
