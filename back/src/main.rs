@@ -176,6 +176,12 @@ fn main() {
             .count() >= 1
     });
 
+    series.iter_mut().for_each(|series| {
+        series
+            .episodes
+            .sort_by_key(|episode| (episode.season_number, episode.episode_number));
+    });
+
     eprintln!("series.len() = {:#?}", series.len());
 
     let json = json!(
