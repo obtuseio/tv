@@ -2,7 +2,7 @@ module Main exposing (..)
 
 import Data exposing (..)
 import Html exposing (..)
-import Html.Attributes exposing (class, classList, href, target, value)
+import Html.Attributes exposing (class, classList, href, style, target, value)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Navigation exposing (Location)
@@ -157,12 +157,6 @@ view model =
 
         isNothing =
             not << isJust
-
-        when condition node =
-            if condition then
-                node
-            else
-                text ""
     in
     div []
         [ h1 [ class "ui center aligned header", onClick Reset ] [ text "tv.obtuse.io" ]
@@ -178,22 +172,37 @@ view model =
             , div [ class "default text", classList [ ( "filtered", query /= "" ) ] ]
                 [ text "Type the name of the show here..."
                 ]
-            , when (isNothing model.series) <|
-                div [ class "menu transition visible" ]
-                    (filtered
-                        |> List.map
-                            (\series ->
-                                div [ class "item", onClick (Select series.id) ]
-                                    [ text <|
-                                        series.primaryTitle
-                                            ++ " ("
-                                            ++ toString series.rating.average
-                                            ++ "/10 from "
-                                            ++ toString series.rating.count
-                                            ++ " votes)"
-                                    ]
-                            )
+            , div
+                [ class "menu transition visible animating slide down"
+                , class
+                    (if isJust model.series then
+                        "out"
+                     else
+                        "in"
                     )
+                , style
+                    [ ( "display"
+                      , if isJust model.series then
+                            "block"
+                        else
+                            "none"
+                      )
+                    ]
+                ]
+                (filtered
+                    |> List.map
+                        (\series ->
+                            div [ class "item", onClick (Select series.id) ]
+                                [ text <|
+                                    series.primaryTitle
+                                        ++ " ("
+                                        ++ toString series.rating.average
+                                        ++ "/10 from "
+                                        ++ toString series.rating.count
+                                        ++ " votes)"
+                                ]
+                        )
+                )
             ]
         , case model.series of
             Just series ->
