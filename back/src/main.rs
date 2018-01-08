@@ -57,7 +57,7 @@ struct Episode<'a> {
     #[serde(rename = "ey")] end_year: Option<u32>,
     #[serde(rename = "sn")] season_number: u32,
     #[serde(rename = "en")] episode_number: u32,
-    #[serde(rename = "r")] rating: Option<&'a Rating>,
+    #[serde(rename = "r")] rating: &'a Rating,
 }
 
 fn main() {
@@ -142,19 +142,21 @@ fn main() {
             "tvEpisode" => {
                 if let &Some(partial_episode) = &partial_episodes_by_id.get(&id) {
                     if let Some(mut series) = series_by_id.get_mut(&partial_episode.series_id) {
-                        series.episodes.push(Episode {
-                            id,
-                            primary_title: n(),
-                            original_title: n(),
-                            start_year: {
-                                n();
-                                n().parse().ok()
-                            },
-                            end_year: n().parse().ok(),
-                            rating: ratings_by_id.get(&id),
-                            season_number: partial_episode.season_number,
-                            episode_number: partial_episode.episode_number,
-                        });
+                        if let Some(rating) = ratings_by_id.get(&id) {
+                            series.episodes.push(Episode {
+                                id,
+                                primary_title: n(),
+                                original_title: n(),
+                                start_year: {
+                                    n();
+                                    n().parse().ok()
+                                },
+                                end_year: n().parse().ok(),
+                                rating,
+                                season_number: partial_episode.season_number,
+                                episode_number: partial_episode.episode_number,
+                            });
+                        }
                     }
                 }
             }
@@ -167,14 +169,8 @@ fn main() {
         .map(|(_, series)| series)
         .collect::<Vec<_>>();
 
-    // We only care about the series which have at least one episode with a rating.
-    series.retain(|series| {
-        series
-            .episodes
-            .iter()
-            .filter(|episode| episode.rating.is_some())
-            .count() >= 1
-    });
+    // We only care about the series which have at least one episode.
+    series.retain(|series| !series.episodes.is_empty());
 
     series.iter_mut().for_each(|series| {
         series
