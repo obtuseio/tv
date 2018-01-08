@@ -20,6 +20,10 @@
   max-height: none;
 }
 
+#app .ui.table {
+  margin-bottom: 2rem;
+}
+
 #app .ui.table thead th.sortable {
   cursor: pointer;
 }
