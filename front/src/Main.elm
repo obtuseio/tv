@@ -147,7 +147,8 @@ view model =
                 text ""
     in
     div []
-        [ div
+        [ h1 [ class "ui center aligned header", onClick Reset ] [ text "tv.obtuse.io" ]
+        , div
             [ class "ui fluid search dropdown selection active visible"
             , classList
                 [ ( "current", isJust model.current )
