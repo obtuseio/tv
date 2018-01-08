@@ -6,6 +6,7 @@ import Html.Attributes exposing (class, classList, href, target, value)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Request
+import Round
 
 
 main : Program Never Model Msg
@@ -144,13 +145,13 @@ view model =
         , case model.current of
             Just current ->
                 div []
-                    [ table [ class "ui celled table" ]
+                    [ table [ class "ui unstackable compact selectable celled table" ]
                         [ thead []
                             [ tr []
-                                [ th [] [ text "#" ]
+                                [ th [ class "right aligned" ] [ text "#" ]
                                 , th [] [ text "Episode" ]
-                                , th [] [ text "Rating" ]
-                                , th [] [ text "Votes" ]
+                                , th [ class "right aligned" ] [ text "Rating" ]
+                                , th [ class "right aligned" ] [ text "Votes" ]
                                 , th [] []
                                 ]
                             ]
@@ -160,10 +161,10 @@ view model =
                                 |> List.map
                                     (\episode ->
                                         tr []
-                                            [ td [] [ text <| toString episode.seasonNumber ++ "." ++ toString episode.episodeNumber ]
+                                            [ td [ class "right aligned" ] [ text <| toString episode.seasonNumber ++ "." ++ toString episode.episodeNumber ]
                                             , td [] [ text episode.primaryTitle ]
-                                            , td [] [ text <| toString <| episode.rating.average ]
-                                            , td [] [ text <| toString <| episode.rating.count ]
+                                            , td [ class "right aligned" ] [ text <| Round.round 1 <| episode.rating.average ]
+                                            , td [ class "right aligned" ] [ text <| toString <| episode.rating.count ]
                                             , td []
                                                 [ a
                                                     [ class "mini ui yellow button"

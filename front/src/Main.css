@@ -7,6 +7,10 @@
   box-shadow: none;
 }
 
+#app .ui.search.dropdown {
+  margin-bottom: 2rem;
+}
+
 #app .ui.search.dropdown .menu {
   max-height: none;
 }
