@@ -7,8 +7,8 @@ import Html.Events exposing (onClick, onInput)
 import Http
 import Navigation exposing (Location)
 import Request
-import Round
 import Route
+import Series
 
 
 main : Program Never Model Msg
@@ -25,26 +25,11 @@ main =
 -- MODEL
 
 
-type Column
-    = Number
-    | Rating
-    | Votes
-
-
-type Order
-    = Asc
-    | Desc
-
-
 type alias Model =
     { index : List Series
     , query : String
-    , current : Maybe Series
+    , series : Maybe Series.Model
     , pendingRequests : Int
-    , sort :
-        { by : Column
-        , order : Order
-        }
     }
 
 
@@ -55,9 +40,8 @@ init location =
             update (Goto location)
                 { index = []
                 , query = ""
-                , current = Nothing
                 , pendingRequests = 1
-                , sort = { by = Number, order = Asc }
+                , series = Nothing
                 }
 
         cmd2 =
@@ -77,7 +61,7 @@ type Msg
     | Select String
     | Reset
     | Goto Location
-    | SortBy Column
+    | SeriesMsg Series.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -94,10 +78,10 @@ update msg model =
             done { model | index = [] } ! []
 
         LoadSeries (Ok series) ->
-            done { model | query = series.primaryTitle, current = Just series } ! []
+            done { model | query = series.primaryTitle, series = Just <| Series.init series } ! []
 
         LoadSeries (Err error) ->
-            done { model | current = Nothing } ! []
+            done { model | series = Nothing } ! []
 
         UpdateQuery query ->
             { model | query = query } ! []
@@ -107,7 +91,7 @@ update msg model =
                 ! [ Navigation.newUrl ("/" ++ id) ]
 
         Reset ->
-            { model | current = Nothing, query = "" } ! []
+            { model | series = Nothing, query = "" } ! []
 
         Goto location ->
             case Route.parse location of
@@ -121,24 +105,17 @@ update msg model =
                 Nothing ->
                     model ! []
 
-        SortBy column ->
-            if model.sort.by == column then
-                let
-                    sort =
-                        { by = model.sort.by
-                        , order =
-                            if model.sort.order == Asc then
-                                Desc
-                            else
-                                Asc
-                        }
-                in
-                { model | sort = sort } ! []
-            else
-                { model
-                    | sort = { by = column, order = Asc }
-                }
-                    ! []
+        SeriesMsg msg ->
+            case model.series of
+                Just series ->
+                    let
+                        ( series2, cmd ) =
+                            Series.update msg series
+                    in
+                    { model | series = Just series2 } ! [ cmd |> Cmd.map SeriesMsg ]
+
+                Nothing ->
+                    model ! []
 
 
 
@@ -186,41 +163,13 @@ view model =
                 node
             else
                 text ""
-
-        sortIcon column =
-            text <|
-                if column == model.sort.by then
-                    if model.sort.order == Asc then
-                        " ▴"
-                    else
-                        " ▾"
-                else
-                    ""
-
-        sortEpisodes sort episodes =
-            let
-                order =
-                    if sort.order == Asc then
-                        1
-                    else
-                        -1
-            in
-            case sort.by of
-                Number ->
-                    episodes |> List.sortBy (\e -> ( e.seasonNumber * order, e.episodeNumber * order ))
-
-                Rating ->
-                    episodes |> List.sortBy (\e -> e.rating.average * order)
-
-                Votes ->
-                    episodes |> List.sortBy (\e -> e.rating.count * order)
     in
     div []
         [ h1 [ class "ui center aligned header", onClick Reset ] [ text "tv.obtuse.io" ]
         , div
             [ class "ui fluid search dropdown selection active visible"
             , classList
-                [ ( "current", isJust model.current )
+                [ ( "current", isJust model.series )
                 , ( "loading", model.pendingRequests > 0 )
                 ]
             ]
@@ -229,7 +178,7 @@ view model =
             , div [ class "default text", classList [ ( "filtered", query /= "" ) ] ]
                 [ text "Type the name of the show here..."
                 ]
-            , when (isNothing model.current) <|
+            , when (isNothing model.series) <|
                 div [ class "menu transition visible" ]
                     (filtered
                         |> List.map
@@ -246,43 +195,9 @@ view model =
                             )
                     )
             ]
-        , case model.current of
-            Just current ->
-                div []
-                    [ table [ class "ui unstackable compact selectable celled table" ]
-                        [ thead []
-                            [ tr []
-                                [ th [ class "right aligned sortable", onClick (SortBy Number) ] [ text "#", sortIcon Number ]
-                                , th [] [ text "Episode" ]
-                                , th [ class "right aligned sortable", onClick (SortBy Rating) ] [ text "Rating", sortIcon Rating ]
-                                , th [ class "right aligned sortable", onClick (SortBy Votes) ] [ text "Votes", sortIcon Votes ]
-                                , th [] []
-                                ]
-                            ]
-                        , tbody
-                            []
-                            (current.episodes
-                                |> sortEpisodes model.sort
-                                |> List.map
-                                    (\episode ->
-                                        tr []
-                                            [ td [ class "right aligned" ] [ text <| toString episode.seasonNumber ++ "." ++ toString episode.episodeNumber ]
-                                            , td [] [ text episode.primaryTitle ]
-                                            , td [ class "right aligned" ] [ text <| Round.round 1 <| episode.rating.average ]
-                                            , td [ class "right aligned" ] [ text <| toString <| episode.rating.count ]
-                                            , td []
-                                                [ a
-                                                    [ class "mini ui yellow button"
-                                                    , href ("https://www.imdb.com/title/" ++ episode.id)
-                                                    , target "_blank"
-                                                    ]
-                                                    [ text "IMDb" ]
-                                                ]
-                                            ]
-                                    )
-                            )
-                        ]
-                    ]
+        , case model.series of
+            Just series ->
+                Series.view series |> Html.map SeriesMsg
 
             Nothing ->
                 text ""
