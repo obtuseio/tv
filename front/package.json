@@ -6,5 +6,8 @@
   "devDependencies": {
     "elm": "^0.18.0",
     "poi-preset-elm": "^1.1.1"
+  },
+  "dependencies": {
+    "semantic-ui-css": "^2.2.12"
   }
 }
