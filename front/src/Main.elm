@@ -40,6 +40,7 @@ init =
 
 type Msg
     = LoadIndex (Result Http.Error (List Series))
+    | LoadSeries (Result Http.Error Series)
     | UpdateQuery String
     | Select Series
     | Reset
@@ -54,11 +55,18 @@ update msg model =
         LoadIndex (Err error) ->
             { model | index = [] } ! []
 
+        LoadSeries (Ok series) ->
+            { model | current = Just series } ! []
+
+        LoadSeries (Err error) ->
+            { model | current = Nothing } ! []
+
         UpdateQuery query ->
             { model | query = query } ! []
 
         Select series ->
-            { model | current = Just series, query = series.primaryTitle } ! []
+            { model | query = series.primaryTitle }
+                ! [ Request.series series.id |> Http.send LoadSeries ]
 
         Reset ->
             { model | current = Nothing, query = "" } ! []
@@ -133,4 +141,34 @@ view model =
                             )
                     )
             ]
+        , case model.current of
+            Just current ->
+                div []
+                    [ table [ class "ui celled table" ]
+                        [ thead []
+                            [ tr []
+                                [ th [] [ text "#" ]
+                                , th [] [ text "Episode" ]
+                                , th [] [ text "Rating" ]
+                                , th [] [ text "Votes" ]
+                                ]
+                            ]
+                        , tbody
+                            []
+                            (current.episodes
+                                |> List.map
+                                    (\episode ->
+                                        tr []
+                                            [ td [] [ text <| toString episode.seasonNumber ++ "." ++ toString episode.episodeNumber ]
+                                            , td [] [ text episode.primaryTitle ]
+                                            , td [] [ text <| toString <| episode.rating.average ]
+                                            , td [] [ text <| toString <| episode.rating.count ]
+                                            ]
+                                    )
+                            )
+                        ]
+                    ]
+
+            Nothing ->
+                text ""
         ]
