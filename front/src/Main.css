@@ -22,5 +22,8 @@
 
 #app .ui.table thead th.sortable {
   cursor: pointer;
+}
+
+#app .unselectable {
   user-select: none;
 }
