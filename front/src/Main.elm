@@ -29,6 +29,7 @@ type alias Model =
     { index : List Series
     , query : String
     , current : Maybe Series
+    , pendingRequests : Int
     }
 
 
@@ -36,7 +37,7 @@ init : Location -> ( Model, Cmd Msg )
 init location =
     let
         ( model, cmd1 ) =
-            update (Goto location) { index = [], query = "", current = Nothing }
+            update (Goto location) { index = [], query = "", current = Nothing, pendingRequests = 1 }
 
         cmd2 =
             Request.index |> Http.send LoadIndex
@@ -59,18 +60,22 @@ type Msg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
+    let
+        done model =
+            { model | pendingRequests = model.pendingRequests - 1 }
+    in
     case msg of
         LoadIndex (Ok index) ->
-            { model | index = index } ! []
+            done { model | index = index } ! []
 
         LoadIndex (Err error) ->
-            { model | index = [] } ! []
+            done { model | index = [] } ! []
 
         LoadSeries (Ok series) ->
-            { model | query = series.primaryTitle, current = Just series } ! []
+            done { model | query = series.primaryTitle, current = Just series } ! []
 
         LoadSeries (Err error) ->
-            { model | current = Nothing } ! []
+            done { model | current = Nothing } ! []
 
         UpdateQuery query ->
             { model | query = query } ! []
@@ -88,7 +93,8 @@ update msg model =
                     model ! []
 
                 Just (Route.Series id) ->
-                    model ! [ Request.series id |> Http.send LoadSeries ]
+                    { model | pendingRequests = model.pendingRequests + 1 }
+                        ! [ Request.series id |> Http.send LoadSeries ]
 
                 Nothing ->
                     model ! []
@@ -141,8 +147,15 @@ view model =
                 text ""
     in
     div []
-        [ div [ class "ui fluid search dropdown selection active visible", classList [ ( "current", isJust model.current ) ] ]
-            [ input [ class "search", value model.query, onClick Reset, onInput UpdateQuery ] []
+        [ div
+            [ class "ui fluid search dropdown selection active visible"
+            , classList
+                [ ( "current", isJust model.current )
+                , ( "loading", model.pendingRequests > 0 )
+                ]
+            ]
+            [ i [ class "dropdown icon" ] []
+            , input [ class "search", value model.query, onClick Reset, onInput UpdateQuery ] []
             , div [ class "default text", classList [ ( "filtered", query /= "" ) ] ]
                 [ text "Type the name of the show here..."
                 ]
