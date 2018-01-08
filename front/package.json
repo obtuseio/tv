@@ -8,6 +8,8 @@
     "poi-preset-elm": "^1.1.1"
   },
   "dependencies": {
+    "highcharts": "^6.0.4",
+    "regression": "^2.0.1",
     "semantic-ui-css": "^2.2.12"
   }
 }

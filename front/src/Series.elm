@@ -2,7 +2,7 @@ module Series exposing (..)
 
 import Data exposing (Series)
 import Html exposing (..)
-import Html.Attributes exposing (class, classList, href, target, value)
+import Html.Attributes exposing (class, classList, href, id, target, value)
 import Html.Events exposing (onClick, onInput)
 import Round
 
@@ -102,7 +102,8 @@ view model =
                     model.series.episodes |> List.sortBy (\e -> e.rating.count * order)
     in
     div []
-        [ table [ class "ui unstackable compact selectable celled table" ]
+        [ div [ id "chart" ] []
+        , table [ class "ui unstackable compact selectable celled table" ]
             [ thead []
                 [ tr []
                     [ th [ class "right aligned sortable", onClick (SortBy Number) ] [ text "#", sortIcon Number ]

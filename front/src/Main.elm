@@ -6,6 +6,7 @@ import Html.Attributes exposing (class, classList, href, style, target, value)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Navigation exposing (Location)
+import Ports
 import Request
 import Route
 import Series
@@ -78,7 +79,7 @@ update msg model =
             done { model | index = [] } ! []
 
         LoadSeries (Ok series) ->
-            done { model | query = series.primaryTitle, series = Just <| Series.init series } ! []
+            done { model | query = series.primaryTitle, series = Just <| Series.init series } ! [ Ports.plot series ]
 
         LoadSeries (Err error) ->
             done { model | series = Nothing } ! []
