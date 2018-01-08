@@ -19,3 +19,8 @@
 #app .ui.search.dropdown .menu {
   max-height: none;
 }
+
+#app .ui.table thead th.sortable {
+  cursor: pointer;
+  user-select: none;
+}

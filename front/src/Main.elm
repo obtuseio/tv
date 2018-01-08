@@ -25,11 +25,26 @@ main =
 -- MODEL
 
 
+type Column
+    = Number
+    | Rating
+    | Votes
+
+
+type Order
+    = Asc
+    | Desc
+
+
 type alias Model =
     { index : List Series
     , query : String
     , current : Maybe Series
     , pendingRequests : Int
+    , sort :
+        { by : Column
+        , order : Order
+        }
     }
 
 
@@ -37,7 +52,13 @@ init : Location -> ( Model, Cmd Msg )
 init location =
     let
         ( model, cmd1 ) =
-            update (Goto location) { index = [], query = "", current = Nothing, pendingRequests = 1 }
+            update (Goto location)
+                { index = []
+                , query = ""
+                , current = Nothing
+                , pendingRequests = 1
+                , sort = { by = Number, order = Asc }
+                }
 
         cmd2 =
             Request.index |> Http.send LoadIndex
@@ -56,6 +77,7 @@ type Msg
     | Select String
     | Reset
     | Goto Location
+    | SortBy Column
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -98,6 +120,25 @@ update msg model =
 
                 Nothing ->
                     model ! []
+
+        SortBy column ->
+            if model.sort.by == column then
+                let
+                    sort =
+                        { by = model.sort.by
+                        , order =
+                            if model.sort.order == Asc then
+                                Desc
+                            else
+                                Asc
+                        }
+                in
+                { model | sort = sort } ! []
+            else
+                { model
+                    | sort = { by = column, order = Asc }
+                }
+                    ! []
 
 
 
@@ -145,6 +186,34 @@ view model =
                 node
             else
                 text ""
+
+        sortIcon column =
+            text <|
+                if column == model.sort.by then
+                    if model.sort.order == Asc then
+                        " ▴"
+                    else
+                        " ▾"
+                else
+                    ""
+
+        sortEpisodes sort episodes =
+            let
+                order =
+                    if sort.order == Asc then
+                        1
+                    else
+                        -1
+            in
+            case sort.by of
+                Number ->
+                    episodes |> List.sortBy (\e -> ( e.seasonNumber * order, e.episodeNumber * order ))
+
+                Rating ->
+                    episodes |> List.sortBy (\e -> e.rating.average * order)
+
+                Votes ->
+                    episodes |> List.sortBy (\e -> e.rating.count * order)
     in
     div []
         [ h1 [ class "ui center aligned header", onClick Reset ] [ text "tv.obtuse.io" ]
@@ -183,16 +252,17 @@ view model =
                     [ table [ class "ui unstackable compact selectable celled table" ]
                         [ thead []
                             [ tr []
-                                [ th [ class "right aligned" ] [ text "#" ]
+                                [ th [ class "right aligned sortable", onClick (SortBy Number) ] [ text "#", sortIcon Number ]
                                 , th [] [ text "Episode" ]
-                                , th [ class "right aligned" ] [ text "Rating" ]
-                                , th [ class "right aligned" ] [ text "Votes" ]
+                                , th [ class "right aligned sortable", onClick (SortBy Rating) ] [ text "Rating", sortIcon Rating ]
+                                , th [ class "right aligned sortable", onClick (SortBy Votes) ] [ text "Votes", sortIcon Votes ]
                                 , th [] []
                                 ]
                             ]
                         , tbody
                             []
                             (current.episodes
+                                |> sortEpisodes model.sort
                                 |> List.map
                                     (\episode ->
                                         tr []
