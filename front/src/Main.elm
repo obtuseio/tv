@@ -68,7 +68,21 @@ view model =
         filtered =
             model.index
                 |> List.filter (\series -> series.primaryTitle |> String.toLower |> String.contains query)
-                |> List.take 10
+                |> List.sortBy
+                    (\series ->
+                        let
+                            first =
+                                if series.primaryTitle |> String.toLower |> String.startsWith query then
+                                    0
+                                else
+                                    1
+
+                            second =
+                                -series.rating.count
+                        in
+                        ( first, second )
+                    )
+                |> List.take 12
     in
     div []
         [ div [ class "ui fluid search dropdown selection active visible" ]
