@@ -194,11 +194,15 @@ view model =
                     |> List.map
                         (\series ->
                             div [ class "item", onClick (Select series.id) ]
-                                [ text <|
-                                    series.primaryTitle
-                                        ++ " ("
+                                [ strong [] [ text series.primaryTitle ]
+                                , text <|
+                                    " ["
+                                        ++ toString series.startYear
+                                        ++ "-"
+                                        ++ (Maybe.map toString series.endYear |> Maybe.withDefault "")
+                                        ++ "] ("
                                         ++ toString series.rating.average
-                                        ++ "/10 from "
+                                        ++ "/10 - "
                                         ++ toString series.rating.count
                                         ++ " votes)"
                                 ]
