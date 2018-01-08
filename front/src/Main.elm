@@ -2,7 +2,7 @@ module Main exposing (..)
 
 import Data exposing (..)
 import Html exposing (..)
-import Html.Attributes exposing (class, classList, value)
+import Html.Attributes exposing (class, classList, href, target, value)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Request
@@ -151,6 +151,7 @@ view model =
                                 , th [] [ text "Episode" ]
                                 , th [] [ text "Rating" ]
                                 , th [] [ text "Votes" ]
+                                , th [] []
                                 ]
                             ]
                         , tbody
@@ -163,6 +164,14 @@ view model =
                                             , td [] [ text episode.primaryTitle ]
                                             , td [] [ text <| toString <| episode.rating.average ]
                                             , td [] [ text <| toString <| episode.rating.count ]
+                                            , td []
+                                                [ a
+                                                    [ class "mini ui yellow button"
+                                                    , href ("https://www.imdb.com/title/" ++ episode.id)
+                                                    , target "_blank"
+                                                    ]
+                                                    [ text "IMDb" ]
+                                                ]
                                             ]
                                     )
                             )
