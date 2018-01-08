@@ -1,4 +1,9 @@
-import Elm from './src/Main.elm';
 import './node_modules/semantic-ui-css/semantic.min.css';
 
-Elm.Main.embed(document.getElementById('app'));
+import Elm from './src/Main.elm';
+import './src/Main.css';
+
+const app = document.getElementById('app');
+app.className = 'ui container';
+
+Elm.Main.embed(app);

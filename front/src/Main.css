@@ -1,0 +1,7 @@
+#app input {
+  font-family: inherit;
+}
+
+#app .ui.search.dropdown .menu {
+  max-height: none;
+}
