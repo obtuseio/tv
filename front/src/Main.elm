@@ -3,7 +3,7 @@ module Main exposing (..)
 import Data exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (class, classList, value)
-import Html.Events exposing (onInput)
+import Html.Events exposing (onClick, onInput)
 import Http
 import Request
 
@@ -25,12 +25,13 @@ main =
 type alias Model =
     { index : List Series
     , query : String
+    , current : Maybe Series
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    { index = [], query = "" } ! [ Request.index |> Http.send LoadIndex ]
+    { index = [], query = "", current = Nothing } ! [ Request.index |> Http.send LoadIndex ]
 
 
 
@@ -40,6 +41,8 @@ init =
 type Msg
     = LoadIndex (Result Http.Error (List Series))
     | UpdateQuery String
+    | Select Series
+    | Reset
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -53,6 +56,12 @@ update msg model =
 
         UpdateQuery query ->
             { model | query = query } ! []
+
+        Select series ->
+            { model | current = Just series, query = series.primaryTitle } ! []
+
+        Reset ->
+            { model | current = Nothing, query = "" } ! []
 
 
 
@@ -83,21 +92,45 @@ view model =
                         ( first, second )
                     )
                 |> List.take 12
+
+        isJust maybe =
+            case maybe of
+                Just _ ->
+                    True
+
+                Nothing ->
+                    False
+
+        isNothing =
+            not << isJust
+
+        when condition node =
+            if condition then
+                node
+            else
+                text ""
     in
     div []
-        [ div [ class "ui fluid search dropdown selection active visible" ]
-            [ input [ class "search", value model.query, onInput UpdateQuery ] []
+        [ div [ class "ui fluid search dropdown selection active visible", classList [ ( "current", isJust model.current ) ] ]
+            [ input [ class "search", value model.query, onClick Reset, onInput UpdateQuery ] []
             , div [ class "default text", classList [ ( "filtered", query /= "" ) ] ]
                 [ text "Type the name of the show here..."
                 ]
-            , div [ class "menu transition visible" ]
-                (filtered
-                    |> List.map
-                        (\series ->
-                            div [ class "item" ]
-                                [ text series.primaryTitle
-                                ]
-                        )
-                )
+            , when (isNothing model.current) <|
+                div [ class "menu transition visible" ]
+                    (filtered
+                        |> List.map
+                            (\series ->
+                                div [ class "item", onClick (Select series) ]
+                                    [ text <|
+                                        series.primaryTitle
+                                            ++ " ("
+                                            ++ toString series.rating.average
+                                            ++ "/10 from "
+                                            ++ toString series.rating.count
+                                            ++ " votes)"
+                                    ]
+                            )
+                    )
             ]
         ]

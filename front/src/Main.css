@@ -2,6 +2,11 @@
   font-family: inherit;
 }
 
+#app .ui.active.selection.dropdown.current {
+  border-radius: 0.28571429rem !important;
+  box-shadow: none;
+}
+
 #app .ui.search.dropdown .menu {
   max-height: none;
 }
