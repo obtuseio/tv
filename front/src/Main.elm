@@ -12,6 +12,7 @@ import Regex
 import Request
 import Route
 import Series
+import Util
 
 
 main : Program Never Model Msg
@@ -206,7 +207,7 @@ view model =
                                         ++ "] ("
                                         ++ toString series.rating.average
                                         ++ "/10 - "
-                                        ++ toString series.rating.count
+                                        ++ Util.formatInt series.rating.count
                                         ++ " votes)"
                                 ]
                         )

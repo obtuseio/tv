@@ -5,6 +5,7 @@ import Html exposing (..)
 import Html.Attributes exposing (class, classList, href, id, target, value)
 import Html.Events exposing (onClick, onInput)
 import Round
+import Util
 
 
 -- MODEL
@@ -122,7 +123,7 @@ view model =
                                 [ td [ class "right aligned" ] [ text <| toString episode.seasonNumber ++ "." ++ toString episode.episodeNumber ]
                                 , td [] [ text episode.primaryTitle ]
                                 , td [ class "right aligned" ] [ text <| Round.round 1 <| episode.rating.average ]
-                                , td [ class "right aligned" ] [ text <| toString <| episode.rating.count ]
+                                , td [ class "right aligned" ] [ text <| Util.formatInt <| episode.rating.count ]
                                 , td []
                                     [ a
                                         [ class "mini ui yellow button"
