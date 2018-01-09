@@ -5,8 +5,10 @@ import Html exposing (..)
 import Html.Attributes exposing (class, classList, href, style, target, value)
 import Html.Events exposing (onClick, onInput)
 import Http
+import Json.Encode
 import Navigation exposing (Location)
 import Ports
+import Regex
 import Request
 import Route
 import Series
@@ -194,7 +196,7 @@ view model =
                     |> List.map
                         (\series ->
                             div [ class "item", onClick (Select series.id) ]
-                                [ strong [] [ text series.primaryTitle ]
+                                [ strong [ highlight query series.primaryTitle ] []
                                 , text <|
                                     " ["
                                         ++ toString series.startYear
@@ -216,3 +218,15 @@ view model =
             Nothing ->
                 text ""
         ]
+
+
+highlight : String -> String -> Attribute msg
+highlight query title =
+    let
+        regex =
+            query |> Regex.escape |> Regex.regex |> Regex.caseInsensitive
+
+        replaced =
+            Regex.replace Regex.All regex (\{ match } -> "<mark>" ++ match ++ "</mark>") title
+    in
+    Html.Attributes.property "innerHTML" (Json.Encode.string replaced)
