@@ -171,7 +171,7 @@ view model =
                 , ( "loading", model.pendingRequests > 0 )
                 ]
             ]
-            [ i [ class "dropdown icon" ] []
+            [ i [ class "dropdown icon unclickable" ] []
             , input [ class "search", value model.query, onClick Reset, onInput UpdateQuery ] []
             , div [ class "default text", classList [ ( "filtered", query /= "" ) ] ]
                 [ text "Type the name of the show here..."

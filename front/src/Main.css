@@ -28,6 +28,10 @@
   cursor: pointer;
 }
 
+#app .unclickable {
+  pointer-events: none;
+}
+
 #app .unselectable {
   user-select: none;
 }
