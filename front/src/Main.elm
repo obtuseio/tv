@@ -164,6 +164,7 @@ view model =
     in
     div []
         [ h1 [ class "ui center aligned header", onClick Reset ] [ text "tv.obtuse.io" ]
+        , h3 [ class "ui center aligned header" ] [ text "Visualize IMDb Ratings of any TV Show's Episodes" ]
         , a [ class "ui black github button", href "https://github.com/obtuseio/tv" ] [ text "GitHub" ]
         , div
             [ class "ui fluid search dropdown selection active visible"

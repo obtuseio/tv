@@ -7,8 +7,8 @@
   box-shadow: none;
 }
 
-#app .ui.header {
-  margin: 2rem 0;
+#app h1.ui.header {
+  margin: 1.5rem 0 -0.5rem;
   cursor: pointer;
 }
 
