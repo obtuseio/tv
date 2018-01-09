@@ -196,7 +196,7 @@ view model =
                 (filtered
                     |> List.map
                         (\series ->
-                            div [ class "item", onClick (Select series.id) ]
+                            div [ class "item unselectable", onClick (Select series.id) ]
                                 [ strong [ highlight query series.primaryTitle ] []
                                 , text <|
                                     " ["
