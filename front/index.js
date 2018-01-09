@@ -9,7 +9,7 @@ const div = document.getElementById('app');
 div.className = 'ui container';
 const app = Elm.Main.embed(div);
 
-app.ports.plot.subscribe(series => requestAnimationFrame(() => plot(series)));
+app.ports.plot.subscribe(show => requestAnimationFrame(() => plot(show)));
 
 // https://stackoverflow.com/a/12646864
 function shuffle(array) {
@@ -20,7 +20,7 @@ function shuffle(array) {
   return array;
 }
 
-function plot(s) {
+function plot(show) {
   const colors = shuffle([
     '#1abc9c',
     '#2ecc71',
@@ -32,7 +32,7 @@ function plot(s) {
     '#e74c3c',
   ]);
 
-  const episodes = s.episodes;
+  const episodes = show.episodes;
 
   const minRating = Math.min.apply(Math, episodes.map(e => e.rating.average));
   const maxSeason = Math.max.apply(Math, episodes.map(e => e.seasonNumber));
@@ -115,7 +115,7 @@ function plot(s) {
       },
     },
     title: {
-      text: `${s.primaryTitle} Episodes' IMDb Ratings`,
+      text: `${show.primaryTitle} Episodes' IMDb Ratings`,
     },
     series: series,
     legend: false,

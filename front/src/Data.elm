@@ -18,7 +18,7 @@ type alias Episode =
     }
 
 
-type alias Series =
+type alias Show =
     { id : String
     , primaryTitle : String
     , startYear : Int

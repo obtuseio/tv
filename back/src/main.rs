@@ -27,7 +27,7 @@ type RatingsById<'a> = HashMap<&'a str, Rating>;
 
 #[derive(Debug)]
 struct PartialEpisode<'a> {
-    series_id: &'a str,
+    show_id: &'a str,
     season_number: u32,
     episode_number: u32,
 }
@@ -35,7 +35,7 @@ struct PartialEpisode<'a> {
 type PartialEpisodesById<'a> = HashMap<&'a str, PartialEpisode<'a>>;
 
 #[derive(Debug, Serialize)]
-struct Series<'a> {
+struct Show<'a> {
     id: &'a str,
     #[serde(rename = "pt")] primary_title: &'a str,
     #[serde(rename = "ot")] original_title: &'a str,
@@ -46,7 +46,7 @@ struct Series<'a> {
     #[serde(rename = "es")] episodes: Vec<Episode<'a>>,
 }
 
-type SeriesById<'a> = HashMap<&'a str, Series<'a>>;
+type ShowsById<'a> = HashMap<&'a str, Show<'a>>;
 
 #[derive(Debug, Serialize)]
 struct Episode<'a> {
@@ -90,7 +90,7 @@ fn main() {
             Some((
                 n(),
                 PartialEpisode {
-                    series_id: n(),
+                    show_id: n(),
                     season_number: n().parse().ok()?,
                     episode_number: n().parse().ok()?,
                 },
@@ -99,7 +99,7 @@ fn main() {
         .collect();
 
     let string = read("data/title.basics.tsv");
-    let mut series_by_id: SeriesById = string
+    let mut shows_by_id: ShowsById = string
         .trim()
         .split('\n')
         .skip(1)
@@ -111,7 +111,7 @@ fn main() {
             match type_ {
                 "tvSeries" => Some((
                     id,
-                    Series {
+                    Show {
                         id: id,
                         primary_title: n(),
                         original_title: n(),
@@ -141,9 +141,9 @@ fn main() {
         match type_ {
             "tvEpisode" => {
                 if let &Some(partial_episode) = &partial_episodes_by_id.get(&id) {
-                    if let Some(mut series) = series_by_id.get_mut(&partial_episode.series_id) {
+                    if let Some(mut show) = shows_by_id.get_mut(&partial_episode.show_id) {
                         if let Some(rating) = ratings_by_id.get(&id) {
-                            series.episodes.push(Episode {
+                            show.episodes.push(Episode {
                                 id,
                                 primary_title: n(),
                                 original_title: n(),
@@ -164,24 +164,23 @@ fn main() {
         }
     });
 
-    let mut series = series_by_id
+    let mut shows = shows_by_id
         .into_iter()
-        .map(|(_, series)| series)
+        .map(|(_, show)| show)
         .collect::<Vec<_>>();
 
-    // We only care about the series which have at least one episode.
-    series.retain(|series| !series.episodes.is_empty());
+    // We only care about the shows which have at least one episode.
+    shows.retain(|show| !show.episodes.is_empty());
 
-    series.iter_mut().for_each(|series| {
-        series
-            .episodes
+    shows.iter_mut().for_each(|show| {
+        show.episodes
             .sort_by_key(|episode| (episode.season_number, episode.episode_number));
     });
 
-    eprintln!("series.len() = {:#?}", series.len());
+    eprintln!("shows.len() = {:#?}", shows.len());
 
     let json = json!(
-        series
+        shows
             .iter()
             .map(|s| json!({
                 "id": s.id,
@@ -196,12 +195,12 @@ fn main() {
             .collect::<Vec<_>>()
     );
 
-    let mut file = File::create("data/series.json").unwrap();
+    let mut file = File::create("data/shows.json").unwrap();
     write!(&mut file, "{}", json).unwrap();
 
-    std::fs::create_dir_all("data/series").unwrap();
-    for s in series {
-        let mut file = File::create(format!("data/series/{}.json", s.id)).unwrap();
-        serde_json::to_writer(&mut file, &s).unwrap();
+    std::fs::create_dir_all("data/shows").unwrap();
+    for show in shows {
+        let mut file = File::create(format!("data/shows/{}.json", show.id)).unwrap();
+        serde_json::to_writer(&mut file, &show).unwrap();
     }
 }

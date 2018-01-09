@@ -11,7 +11,7 @@ import Ports
 import Regex
 import Request
 import Route
-import Series
+import Show
 import Util
 
 
@@ -30,9 +30,9 @@ main =
 
 
 type alias Model =
-    { index : List Series
+    { shows : List Show
     , query : String
-    , series : Maybe Series.Model
+    , show : Maybe Show.Model
     , pendingRequests : Int
     }
 
@@ -42,14 +42,14 @@ init location =
     let
         ( model, cmd1 ) =
             update (Goto location)
-                { index = []
+                { shows = []
                 , query = ""
                 , pendingRequests = 1
-                , series = Nothing
+                , show = Nothing
                 }
 
         cmd2 =
-            Request.index |> Http.send LoadIndex
+            Request.shows |> Http.send LoadShows
     in
     ( model, Cmd.batch [ cmd1, cmd2 ] )
 
@@ -59,13 +59,13 @@ init location =
 
 
 type Msg
-    = LoadIndex (Result Http.Error (List Series))
-    | LoadSeries (Result Http.Error Series)
+    = LoadShows (Result Http.Error (List Show))
+    | LoadShow (Result Http.Error Show)
     | UpdateQuery String
     | Select String
     | Reset
     | Goto Location
-    | SeriesMsg Series.Msg
+    | ShowMsg Show.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -75,17 +75,17 @@ update msg model =
             { model | pendingRequests = model.pendingRequests - 1 }
     in
     case msg of
-        LoadIndex (Ok index) ->
-            done { model | index = index } ! []
+        LoadShows (Ok shows) ->
+            done { model | shows = shows } ! []
 
-        LoadIndex (Err error) ->
-            done { model | index = [] } ! []
+        LoadShows (Err error) ->
+            done { model | shows = [] } ! []
 
-        LoadSeries (Ok series) ->
-            done { model | query = series.primaryTitle, series = Just <| Series.init series } ! [ Ports.plot series ]
+        LoadShow (Ok show) ->
+            done { model | query = show.primaryTitle, show = Just <| Show.init show } ! [ Ports.plot show ]
 
-        LoadSeries (Err error) ->
-            done { model | series = Nothing } ! []
+        LoadShow (Err error) ->
+            done { model | show = Nothing } ! []
 
         UpdateQuery query ->
             { model | query = query } ! []
@@ -95,28 +95,28 @@ update msg model =
                 ! [ Navigation.newUrl ("/" ++ id) ]
 
         Reset ->
-            { model | series = Nothing, query = "" } ! []
+            { model | show = Nothing, query = "" } ! []
 
         Goto location ->
             case Route.parse location of
                 Just Route.Home ->
                     model ! []
 
-                Just (Route.Series id) ->
+                Just (Route.Show id) ->
                     { model | pendingRequests = model.pendingRequests + 1 }
-                        ! [ Request.series id |> Http.send LoadSeries ]
+                        ! [ Request.show id |> Http.send LoadShow ]
 
                 Nothing ->
                     model ! []
 
-        SeriesMsg msg ->
-            case model.series of
-                Just series ->
+        ShowMsg msg ->
+            case model.show of
+                Just show ->
                     let
-                        ( series2, cmd ) =
-                            Series.update msg series
+                        ( show2, cmd ) =
+                            Show.update msg show
                     in
-                    { model | series = Just series2 } ! [ cmd |> Cmd.map SeriesMsg ]
+                    { model | show = Just show2 } ! [ cmd |> Cmd.map ShowMsg ]
 
                 Nothing ->
                     model ! []
@@ -133,19 +133,19 @@ view model =
             model.query |> String.toLower
 
         filtered =
-            model.index
-                |> List.filter (\series -> series.primaryTitle |> String.toLower |> String.contains query)
+            model.shows
+                |> List.filter (\show -> show.primaryTitle |> String.toLower |> String.contains query)
                 |> List.sortBy
-                    (\series ->
+                    (\show ->
                         let
                             first =
-                                if series.primaryTitle |> String.toLower |> String.startsWith query then
+                                if show.primaryTitle |> String.toLower |> String.startsWith query then
                                     0
                                 else
                                     1
 
                             second =
-                                -series.rating.count
+                                -show.rating.count
                         in
                         ( first, second )
                     )
@@ -169,7 +169,7 @@ view model =
         , div
             [ class "ui fluid search dropdown selection active visible"
             , classList
-                [ ( "current", isJust model.series )
+                [ ( "current", isJust model.show )
                 , ( "loading", model.pendingRequests > 0 )
                 ]
             ]
@@ -181,14 +181,14 @@ view model =
             , div
                 [ class "menu transition visible animating slide down"
                 , class
-                    (if isJust model.series then
+                    (if isJust model.show then
                         "out"
                      else
                         "in"
                     )
                 , style
                     [ ( "display"
-                      , if isJust model.series then
+                      , if isJust model.show then
                             "block"
                         else
                             "none"
@@ -197,26 +197,26 @@ view model =
                 ]
                 (filtered
                     |> List.map
-                        (\series ->
-                            div [ class "item unselectable", onClick (Select series.id) ]
-                                [ strong [ highlight query series.primaryTitle ] []
+                        (\show ->
+                            div [ class "item unselectable", onClick (Select show.id) ]
+                                [ strong [ highlight query show.primaryTitle ] []
                                 , text <|
                                     " ["
-                                        ++ toString series.startYear
+                                        ++ toString show.startYear
                                         ++ "-"
-                                        ++ (Maybe.map toString series.endYear |> Maybe.withDefault "")
+                                        ++ (Maybe.map toString show.endYear |> Maybe.withDefault "")
                                         ++ "] ("
-                                        ++ toString series.rating.average
+                                        ++ toString show.rating.average
                                         ++ "/10 - "
-                                        ++ Util.formatInt series.rating.count
+                                        ++ Util.formatInt show.rating.count
                                         ++ " votes)"
                                 ]
                         )
                 )
             ]
-        , case model.series of
-            Just series ->
-                Series.view series |> Html.map SeriesMsg
+        , case model.show of
+            Just show ->
+                Show.view show |> Html.map ShowMsg
 
             Nothing ->
                 text ""

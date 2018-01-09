@@ -1,6 +1,6 @@
 port module Ports exposing (plot)
 
-import Data exposing (Series)
+import Data exposing (Show)
 
 
-port plot : Series -> Cmd msg
+port plot : Show -> Cmd msg

@@ -1,6 +1,6 @@
-module Series exposing (..)
+module Show exposing (..)
 
-import Data exposing (Series)
+import Data exposing (Show)
 import Html exposing (..)
 import Html.Attributes exposing (class, classList, href, id, target, value)
 import Html.Events exposing (onClick, onInput)
@@ -23,7 +23,7 @@ type Order
 
 
 type alias Model =
-    { series : Series
+    { show : Show
     , sort :
         { by : Column
         , order : Order
@@ -31,9 +31,9 @@ type alias Model =
     }
 
 
-init : Series -> Model
-init series =
-    Model series { by = Number, order = Asc }
+init : Show -> Model
+init show =
+    Model show { by = Number, order = Asc }
 
 
 
@@ -94,13 +94,13 @@ view model =
             in
             case model.sort.by of
                 Number ->
-                    model.series.episodes |> List.sortBy (\e -> ( e.seasonNumber * order, e.episodeNumber * order ))
+                    model.show.episodes |> List.sortBy (\e -> ( e.seasonNumber * order, e.episodeNumber * order ))
 
                 Rating ->
-                    model.series.episodes |> List.sortBy (\e -> e.rating.average * order)
+                    model.show.episodes |> List.sortBy (\e -> e.rating.average * order)
 
                 Votes ->
-                    model.series.episodes |> List.sortBy (\e -> e.rating.count * order)
+                    model.show.episodes |> List.sortBy (\e -> e.rating.count * order)
     in
     div []
         [ div [ id "chart" ] []

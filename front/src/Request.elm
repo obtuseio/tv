@@ -24,9 +24,9 @@ decodeEpisode =
         (Decode.field "r" decodeRating)
 
 
-decodeSeries : Decoder Series
-decodeSeries =
-    Decode.map6 Series
+decodeShow : Decoder Show
+decodeShow =
+    Decode.map6 Show
         (Decode.field "id" Decode.string)
         (Decode.field "pt" Decode.string)
         (Decode.field "sy" Decode.int)
@@ -35,11 +35,11 @@ decodeSeries =
         (Decode.oneOf [ Decode.field "es" (Decode.list decodeEpisode), Decode.succeed [] ])
 
 
-index : Http.Request (List Series)
-index =
-    Http.get "/data/series.json" (Decode.list decodeSeries)
+shows : Http.Request (List Show)
+shows =
+    Http.get "/data/shows.json" (Decode.list decodeShow)
 
 
-series : String -> Http.Request Series
-series id =
-    Http.get ("/data/series/" ++ id ++ ".json") decodeSeries
+show : String -> Http.Request Show
+show id =
+    Http.get ("/data/shows/" ++ id ++ ".json") decodeShow
