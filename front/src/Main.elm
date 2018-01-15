@@ -47,7 +47,7 @@ init location =
                 }
 
         cmd2 =
-            Request.shows |> RemoteData.sendRequest |> Cmd.map LoadShows
+            Request.shows |> RemoteData.sendRequest |> Cmd.map ShowsResponse
     in
     ( model, Cmd.batch [ cmd1, cmd2 ] )
 
@@ -57,8 +57,8 @@ init location =
 
 
 type Msg
-    = LoadShows (WebData (List Show))
-    | LoadShow (WebData Show)
+    = ShowsResponse (WebData (List Show))
+    | ShowResponse (WebData Show)
     | UpdateQuery String
     | Select String
     | Reset
@@ -69,13 +69,13 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        LoadShows shows ->
+        ShowsResponse shows ->
             { model | shows = shows } ! []
 
-        LoadShow (Success show) ->
+        ShowResponse (Success show) ->
             { model | query = show.primaryTitle, show = Success (Show.init show) } ! [ Ports.plot show ]
 
-        LoadShow show ->
+        ShowResponse show ->
             { model | show = show |> RemoteData.map Show.init } ! []
 
         UpdateQuery query ->
@@ -95,7 +95,7 @@ update msg model =
 
                 Just (Route.Show id) ->
                     { model | show = Loading }
-                        ! [ Request.show id |> RemoteData.sendRequest |> Cmd.map LoadShow ]
+                        ! [ Request.show id |> RemoteData.sendRequest |> Cmd.map ShowResponse ]
 
                 Nothing ->
                     model ! []
