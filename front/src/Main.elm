@@ -4,11 +4,11 @@ import Data exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (class, classList, href, style, target, value)
 import Html.Events exposing (onClick, onInput)
-import Http
 import Json.Encode
 import Navigation exposing (Location)
 import Ports
 import Regex
+import RemoteData exposing (RemoteData(..), WebData)
 import Request
 import Route
 import Show
@@ -30,10 +30,9 @@ main =
 
 
 type alias Model =
-    { shows : List Show
+    { shows : WebData (List Show)
     , query : String
-    , show : Maybe Show.Model
-    , pendingRequests : Int
+    , show : WebData Show.Model
     }
 
 
@@ -42,14 +41,13 @@ init location =
     let
         ( model, cmd1 ) =
             update (Goto location)
-                { shows = []
+                { shows = Loading
                 , query = ""
-                , pendingRequests = 1
-                , show = Nothing
+                , show = NotAsked
                 }
 
         cmd2 =
-            Request.shows |> Http.send LoadShows
+            Request.shows |> RemoteData.sendRequest |> Cmd.map LoadShows
     in
     ( model, Cmd.batch [ cmd1, cmd2 ] )
 
@@ -59,8 +57,8 @@ init location =
 
 
 type Msg
-    = LoadShows (Result Http.Error (List Show))
-    | LoadShow (Result Http.Error Show)
+    = LoadShows (WebData (List Show))
+    | LoadShow (WebData Show)
     | UpdateQuery String
     | Select String
     | Reset
@@ -70,22 +68,15 @@ type Msg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    let
-        done model =
-            { model | pendingRequests = model.pendingRequests - 1 }
-    in
     case msg of
-        LoadShows (Ok shows) ->
-            done { model | shows = shows } ! []
+        LoadShows shows ->
+            { model | shows = shows } ! []
 
-        LoadShows (Err error) ->
-            done { model | shows = [] } ! []
+        LoadShow (Success show) ->
+            { model | query = show.primaryTitle, show = Success (Show.init show) } ! [ Ports.plot show ]
 
-        LoadShow (Ok show) ->
-            done { model | query = show.primaryTitle, show = Just <| Show.init show } ! [ Ports.plot show ]
-
-        LoadShow (Err error) ->
-            done { model | show = Nothing } ! []
+        LoadShow show ->
+            { model | show = show |> RemoteData.map Show.init } ! []
 
         UpdateQuery query ->
             { model | query = query } ! []
@@ -95,7 +86,7 @@ update msg model =
                 ! [ Navigation.newUrl ("/" ++ id) ]
 
         Reset ->
-            { model | show = Nothing, query = "" } ! []
+            { model | show = NotAsked, query = "" } ! []
 
         Goto location ->
             case Route.parse location of
@@ -103,22 +94,22 @@ update msg model =
                     model ! []
 
                 Just (Route.Show id) ->
-                    { model | pendingRequests = model.pendingRequests + 1 }
-                        ! [ Request.show id |> Http.send LoadShow ]
+                    { model | show = Loading }
+                        ! [ Request.show id |> RemoteData.sendRequest |> Cmd.map LoadShow ]
 
                 Nothing ->
                     model ! []
 
         ShowMsg msg ->
             case model.show of
-                Just show ->
+                Success show ->
                     let
                         ( show2, cmd ) =
                             Show.update msg show
                     in
-                    { model | show = Just show2 } ! [ cmd |> Cmd.map ShowMsg ]
+                    { model | show = Success show2 } ! [ cmd |> Cmd.map ShowMsg ]
 
-                Nothing ->
+                _ ->
                     model ! []
 
 
@@ -133,34 +124,31 @@ view model =
             model.query |> String.toLower
 
         filtered =
-            model.shows
-                |> List.filter (\show -> show.primaryTitle |> String.toLower |> String.contains query)
-                |> List.sortBy
-                    (\show ->
-                        let
-                            first =
-                                if show.primaryTitle |> String.toLower |> String.startsWith query then
-                                    0
-                                else
-                                    1
+            case model.shows of
+                Success shows ->
+                    shows
+                        |> List.filter (\show -> show.primaryTitle |> String.toLower |> String.contains query)
+                        |> List.sortBy
+                            (\show ->
+                                let
+                                    first =
+                                        if show.primaryTitle |> String.toLower |> String.startsWith query then
+                                            0
+                                        else
+                                            1
 
-                            second =
-                                -show.rating.count
-                        in
-                        ( first, second )
-                    )
-                |> List.take 12
+                                    second =
+                                        -show.rating.count
+                                in
+                                ( first, second )
+                            )
+                        |> List.take 12
 
-        isJust maybe =
-            case maybe of
-                Just _ ->
-                    True
+                _ ->
+                    []
 
-                Nothing ->
-                    False
-
-        isNothing =
-            not << isJust
+        isLoading =
+            model.shows == Loading || model.show == Loading
     in
     div []
         [ h1 [ class "ui center aligned header", onClick Reset ] [ text "tv.obtuse.io" ]
@@ -169,8 +157,8 @@ view model =
         , div
             [ class "ui fluid search dropdown selection active visible"
             , classList
-                [ ( "current", isJust model.show )
-                , ( "loading", model.pendingRequests > 0 )
+                [ ( "current", RemoteData.isSuccess model.show )
+                , ( "loading", isLoading )
                 ]
             ]
             [ i [ class "dropdown icon unclickable" ] []
@@ -181,14 +169,14 @@ view model =
             , div
                 [ class "menu transition visible animating slide down"
                 , class
-                    (if isJust model.show then
+                    (if RemoteData.isSuccess model.show then
                         "out"
                      else
                         "in"
                     )
                 , style
                     [ ( "display"
-                      , if isJust model.show then
+                      , if RemoteData.isSuccess model.show then
                             "block"
                         else
                             "none"
@@ -215,10 +203,10 @@ view model =
                 )
             ]
         , case model.show of
-            Just show ->
+            Success show ->
                 Show.view show |> Html.map ShowMsg
 
-            Nothing ->
+            _ ->
                 text ""
         ]
 
