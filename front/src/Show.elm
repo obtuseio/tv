@@ -4,6 +4,7 @@ import Data exposing (Show)
 import Html exposing (..)
 import Html.Attributes exposing (class, classList, href, id, target, value)
 import Html.Events exposing (onClick, onInput)
+import Ports
 import Round
 import Util
 
@@ -28,12 +29,18 @@ type alias Model =
         { by : Column
         , order : Order
         }
+    , ratingFromZero : Bool
     }
 
 
-init : Show -> Model
+init : Show -> ( Model, Cmd msg )
 init show =
-    Model show { by = Number, order = Asc }
+    plot <| Model show { by = Number, order = Asc } False
+
+
+plot : Model -> ( Model, Cmd msg )
+plot ({ show, ratingFromZero } as model) =
+    model ! [ Ports.plot { show = show, ratingFromZero = ratingFromZero } ]
 
 
 
@@ -42,6 +49,7 @@ init show =
 
 type Msg
     = SortBy Column
+    | ToggleRatingFromZero
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -65,6 +73,9 @@ update msg model =
                     | sort = { by = column, order = Asc }
                 }
                     ! []
+
+        ToggleRatingFromZero ->
+            plot { model | ratingFromZero = not model.ratingFromZero }
 
 
 
@@ -104,6 +115,17 @@ view model =
     in
     div []
         [ div [ id "chart" ] []
+        , div [ class "ui center aligned segment" ]
+            [ div [ class "ui buttons" ]
+                [ div
+                    [ class "ui button"
+                    , classList
+                        [ ( "green", model.ratingFromZero ) ]
+                    , onClick ToggleRatingFromZero
+                    ]
+                    [ text "Plot Rating from 0?" ]
+                ]
+            ]
         , table [ class "ui unstackable compact selectable celled table" ]
             [ thead []
                 [ tr []

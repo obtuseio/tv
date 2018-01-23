@@ -76,10 +76,14 @@ update msg model =
             { model | shows = shows } ! []
 
         ShowResponse (Success show) ->
-            { model | query = show.primaryTitle, show = Success (Show.init show) } ! [ Ports.plot show ]
+            let
+                ( showModel, cmd ) =
+                    Show.init show
+            in
+            { model | query = show.primaryTitle, show = Success showModel } ! [ cmd ]
 
         ShowResponse show ->
-            { model | show = show |> RemoteData.map Show.init } ! []
+            { model | show = show |> RemoteData.map (Show.init >> Tuple.first) } ! []
 
         UpdateQuery query ->
             { model | query = query } ! []

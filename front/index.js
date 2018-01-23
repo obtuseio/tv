@@ -9,7 +9,7 @@ const div = document.getElementById('app');
 div.className = 'ui container';
 const app = Elm.Main.embed(div);
 
-app.ports.plot.subscribe(show => requestAnimationFrame(() => plot(show)));
+app.ports.plot.subscribe(chart => requestAnimationFrame(() => plot(chart)));
 
 // https://stackoverflow.com/a/12646864
 function shuffle(array) {
@@ -20,7 +20,7 @@ function shuffle(array) {
   return array;
 }
 
-function plot(show) {
+function plot({show, ratingFromZero}) {
   const colors = shuffle([
     '#1abc9c',
     '#2ecc71',
@@ -108,7 +108,7 @@ function plot(show) {
       },
     },
     yAxis: {
-      min: minRating,
+      min: ratingFromZero ? 0 : minRating,
       max: 10,
       title: {
         text: 'IMDb Rating',

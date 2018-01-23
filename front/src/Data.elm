@@ -26,3 +26,9 @@ type alias Show =
     , rating : Rating
     , episodes : List Episode
     }
+
+
+type alias Chart =
+    { show : Show
+    , ratingFromZero : Bool
+    }
