@@ -33,6 +33,7 @@ type alias Model =
     { shows : WebData (List Show)
     , query : String
     , show : WebData Show.Model
+    , isOpen : Bool
     }
 
 
@@ -44,6 +45,7 @@ init location =
                 { shows = Loading
                 , query = ""
                 , show = NotAsked
+                , isOpen = True
                 }
 
         cmd2 =
@@ -64,6 +66,7 @@ type Msg
     | Reset
     | Goto Location
     | ShowMsg Show.Msg
+    | ToggleDropdown
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -86,15 +89,15 @@ update msg model =
                 ! [ Navigation.newUrl ("/" ++ id) ]
 
         Reset ->
-            { model | show = NotAsked, query = "" } ! []
+            model ! [ Navigation.newUrl "/" ]
 
         Goto location ->
             case Route.parse location of
                 Just Route.Home ->
-                    model ! []
+                    { model | isOpen = True, query = "", show = NotAsked } ! []
 
                 Just (Route.Show id) ->
-                    { model | show = Loading }
+                    { model | show = Loading, isOpen = False }
                         ! [ Request.show id |> RemoteData.sendRequest |> Cmd.map ShowResponse ]
 
                 Nothing ->
@@ -111,6 +114,14 @@ update msg model =
 
                 _ ->
                     model ! []
+
+        ToggleDropdown ->
+            case ( model.isOpen, model.show ) of
+                ( True, Success { show } ) ->
+                    { model | isOpen = False, query = show.primaryTitle } ! []
+
+                _ ->
+                    { model | isOpen = True, query = "" } ! []
 
 
 
@@ -157,29 +168,29 @@ view model =
         , div
             [ class "ui fluid search dropdown selection active visible"
             , classList
-                [ ( "current", RemoteData.isSuccess model.show )
+                [ ( "current", not model.isOpen )
                 , ( "loading", isLoading )
                 ]
             ]
             [ i [ class "dropdown icon unclickable" ] []
-            , input [ class "search", value model.query, onClick Reset, onInput UpdateQuery ] []
+            , input [ class "search", value model.query, onClick ToggleDropdown, onInput UpdateQuery ] []
             , div [ class "default text", classList [ ( "filtered", query /= "" ) ] ]
                 [ text "Type the name of the show here..."
                 ]
             , div
                 [ class "menu transition visible animating slide down"
                 , class
-                    (if RemoteData.isSuccess model.show then
-                        "out"
-                     else
+                    (if model.isOpen then
                         "in"
+                     else
+                        "out"
                     )
                 , style
                     [ ( "display"
-                      , if RemoteData.isSuccess model.show then
-                            "block"
-                        else
+                      , if model.isOpen then
                             "none"
+                        else
+                            "block"
                       )
                     ]
                 ]
