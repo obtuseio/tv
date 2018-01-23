@@ -134,7 +134,7 @@ view model =
                     [ ( "green", model.showTrend ) ]
                 , onClick ToggleShowTrend
                 ]
-                [ text "Show Season Trend?" ]
+                [ text "Show Show Trend?" ]
             ]
         , table [ class "ui unstackable compact selectable celled table" ]
             [ thead []
