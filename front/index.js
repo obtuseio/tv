@@ -20,7 +20,7 @@ function shuffle(array) {
   return array;
 }
 
-function plot({show, ratingFromZero, showTrend}) {
+function plot({show, ratingFromZero, seasonTrend, showTrend}) {
   const colors = shuffle([
     '#1abc9c',
     '#2ecc71',
@@ -71,21 +71,23 @@ function plot({show, ratingFromZero, showTrend}) {
       i++, push++
     );
 
-    series.push({
-      type: 'line',
-      name: `Season ${seasonNumber}`,
-      data: [[x1 + push, y1], [x2 + push, y2]],
-      marker: {
-        enabled: false,
-        symbol: 'square',
-      },
-      tooltip: {
-        headerFormat: '',
-        pointFormat: `<strong>Season ${seasonNumber} Trend</strong><br>
+    if (seasonTrend) {
+      series.push({
+        type: 'line',
+        name: `Season ${seasonNumber}`,
+        data: [[x1 + push, y1], [x2 + push, y2]],
+        marker: {
+          enabled: false,
+          symbol: 'square',
+        },
+        tooltip: {
+          headerFormat: '',
+          pointFormat: `<strong>Season ${seasonNumber} Trend</strong><br>
         ${y1.toFixed(2)} → ${y2.toFixed(2)}`,
-      },
-      color: colors[seasonNumber % colors.length],
-    });
+        },
+        color: colors[seasonNumber % colors.length],
+      });
+    }
 
     series.push({
       type: 'scatter',

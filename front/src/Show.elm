@@ -31,17 +31,25 @@ type alias Model =
         }
     , ratingFromZero : Bool
     , showTrend : Bool
+    , seasonTrend : Bool
     }
 
 
 init : Show -> ( Model, Cmd msg )
 init show =
-    plot <| Model show { by = Number, order = Asc } False False
+    plot <| Model show { by = Number, order = Asc } False False True
 
 
 plot : Model -> ( Model, Cmd msg )
-plot ({ show, ratingFromZero, showTrend } as model) =
-    model ! [ Ports.plot { show = show, ratingFromZero = ratingFromZero, showTrend = showTrend } ]
+plot model =
+    model
+        ! [ Ports.plot
+                { show = model.show
+                , ratingFromZero = model.ratingFromZero
+                , showTrend = model.showTrend
+                , seasonTrend = model.seasonTrend
+                }
+          ]
 
 
 
@@ -52,6 +60,7 @@ type Msg
     = SortBy Column
     | ToggleRatingFromZero
     | ToggleShowTrend
+    | ToggleSeasonTrend
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -81,6 +90,9 @@ update msg model =
 
         ToggleShowTrend ->
             plot { model | showTrend = not model.showTrend }
+
+        ToggleSeasonTrend ->
+            plot { model | seasonTrend = not model.seasonTrend }
 
 
 
@@ -124,17 +136,24 @@ view model =
             [ div
                 [ class "ui button"
                 , classList
-                    [ ( "green", model.ratingFromZero ) ]
-                , onClick ToggleRatingFromZero
-                ]
-                [ text "Plot Rating from 0?" ]
-            , div
-                [ class "ui button"
-                , classList
                     [ ( "green", model.showTrend ) ]
                 , onClick ToggleShowTrend
                 ]
                 [ text "Show Show Trend?" ]
+            , div
+                [ class "ui button"
+                , classList
+                    [ ( "green", model.seasonTrend ) ]
+                , onClick ToggleSeasonTrend
+                ]
+                [ text "Show Season Trend?" ]
+            , div
+                [ class "ui button"
+                , classList
+                    [ ( "green", model.ratingFromZero ) ]
+                , onClick ToggleRatingFromZero
+                ]
+                [ text "Plot Rating from 0?" ]
             ]
         , table [ class "ui unstackable compact selectable celled table" ]
             [ thead []
