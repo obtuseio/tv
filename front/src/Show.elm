@@ -30,17 +30,18 @@ type alias Model =
         , order : Order
         }
     , ratingFromZero : Bool
+    , showTrend : Bool
     }
 
 
 init : Show -> ( Model, Cmd msg )
 init show =
-    plot <| Model show { by = Number, order = Asc } False
+    plot <| Model show { by = Number, order = Asc } False False
 
 
 plot : Model -> ( Model, Cmd msg )
-plot ({ show, ratingFromZero } as model) =
-    model ! [ Ports.plot { show = show, ratingFromZero = ratingFromZero } ]
+plot ({ show, ratingFromZero, showTrend } as model) =
+    model ! [ Ports.plot { show = show, ratingFromZero = ratingFromZero, showTrend = showTrend } ]
 
 
 
@@ -50,6 +51,7 @@ plot ({ show, ratingFromZero } as model) =
 type Msg
     = SortBy Column
     | ToggleRatingFromZero
+    | ToggleShowTrend
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -76,6 +78,9 @@ update msg model =
 
         ToggleRatingFromZero ->
             plot { model | ratingFromZero = not model.ratingFromZero }
+
+        ToggleShowTrend ->
+            plot { model | showTrend = not model.showTrend }
 
 
 
@@ -116,15 +121,20 @@ view model =
     div []
         [ div [ id "chart" ] []
         , div [ class "ui center aligned segment" ]
-            [ div [ class "ui buttons" ]
-                [ div
-                    [ class "ui button"
-                    , classList
-                        [ ( "green", model.ratingFromZero ) ]
-                    , onClick ToggleRatingFromZero
-                    ]
-                    [ text "Plot Rating from 0?" ]
+            [ div
+                [ class "ui button"
+                , classList
+                    [ ( "green", model.ratingFromZero ) ]
+                , onClick ToggleRatingFromZero
                 ]
+                [ text "Plot Rating from 0?" ]
+            , div
+                [ class "ui button"
+                , classList
+                    [ ( "green", model.showTrend ) ]
+                , onClick ToggleShowTrend
+                ]
+                [ text "Show Season Trend?" ]
             ]
         , table [ class "ui unstackable compact selectable celled table" ]
             [ thead []

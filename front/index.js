@@ -20,7 +20,7 @@ function shuffle(array) {
   return array;
 }
 
-function plot({show, ratingFromZero}) {
+function plot({show, ratingFromZero, showTrend}) {
   const colors = shuffle([
     '#1abc9c',
     '#2ecc71',
@@ -38,6 +38,26 @@ function plot({show, ratingFromZero}) {
   const maxSeason = Math.max.apply(Math, episodes.map(e => e.seasonNumber));
 
   const series = [];
+
+  if (showTrend) {
+    const [[x1, y1], [x2, y2]] = regressionLine(episodes);
+    series.push({
+      type: 'line',
+      name: 'Series',
+      data: [[x1, y1], [x2, y2]],
+      marker: {
+        enabled: false,
+        symbol: 'square',
+      },
+      tooltip: {
+        headerFormat: '',
+        pointFormat: `<strong>Series Trend</strong><br>${y1.toFixed(
+          2
+        )} → ${y2.toFixed(2)}`,
+      },
+      color: colors[(maxSeason + 1) % colors.length],
+    });
+  }
 
   for (let seasonNumber = 1; seasonNumber <= maxSeason; seasonNumber++) {
     const [[x1, y1], [x2, y2]] = regressionLine(

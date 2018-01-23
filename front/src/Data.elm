@@ -31,4 +31,5 @@ type alias Show =
 type alias Chart =
     { show : Show
     , ratingFromZero : Bool
+    , showTrend : Bool
     }
