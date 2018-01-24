@@ -1,6 +1,6 @@
 module Show exposing (..)
 
-import Data exposing (Show)
+import Data exposing (ChartOptions, Show)
 import Html exposing (..)
 import Html.Attributes exposing (class, classList, href, id, target, value)
 import Html.Events exposing (onClick, onInput)
@@ -29,27 +29,21 @@ type alias Model =
         { by : Column
         , order : Order
         }
-    , ratingFromZero : Bool
-    , showTrend : Bool
-    , seasonTrend : Bool
     }
 
 
-init : Show -> ( Model, Cmd msg )
-init show =
-    plot <| Model show { by = Number, order = Asc } False False True
+init : Show -> ChartOptions -> ( Model, Cmd msg )
+init show chartOptions =
+    let
+        ( model, cmd, _ ) =
+            plot (Model show { by = Number, order = Asc }) chartOptions
+    in
+    ( model, cmd )
 
 
-plot : Model -> ( Model, Cmd msg )
-plot model =
-    model
-        ! [ Ports.plot
-                { show = model.show
-                , ratingFromZero = model.ratingFromZero
-                , showTrend = model.showTrend
-                , seasonTrend = model.seasonTrend
-                }
-          ]
+plot : Model -> ChartOptions -> ( Model, Cmd msg, ChartOptions )
+plot model chartOptions =
+    ( model, Ports.plot ( model.show, chartOptions ), chartOptions )
 
 
 
@@ -63,8 +57,8 @@ type Msg
     | ToggleSeasonTrend
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update : Msg -> Model -> ChartOptions -> ( Model, Cmd Msg, ChartOptions )
+update msg model chartOptions =
     case msg of
         SortBy column ->
             if model.sort.by == column then
@@ -78,29 +72,31 @@ update msg model =
                                 Asc
                         }
                 in
-                { model | sort = sort } ! []
+                ( { model | sort = sort }, Cmd.none, chartOptions )
             else
-                { model
+                ( { model
                     | sort = { by = column, order = Asc }
-                }
-                    ! []
+                  }
+                , Cmd.none
+                , chartOptions
+                )
 
         ToggleRatingFromZero ->
-            plot { model | ratingFromZero = not model.ratingFromZero }
+            plot model { chartOptions | ratingFromZero = not chartOptions.ratingFromZero }
 
         ToggleShowTrend ->
-            plot { model | showTrend = not model.showTrend }
+            plot model { chartOptions | showTrend = not chartOptions.showTrend }
 
         ToggleSeasonTrend ->
-            plot { model | seasonTrend = not model.seasonTrend }
+            plot model { chartOptions | seasonTrend = not chartOptions.seasonTrend }
 
 
 
 -- VIEW
 
 
-view : Model -> Html Msg
-view model =
+view : Model -> ChartOptions -> Html Msg
+view model chartOptions =
     let
         sortIcon column =
             text <|
@@ -136,21 +132,21 @@ view model =
             [ div
                 [ class "ui button"
                 , classList
-                    [ ( "green", model.showTrend ) ]
+                    [ ( "green", chartOptions.showTrend ) ]
                 , onClick ToggleShowTrend
                 ]
                 [ text "Show Show Trend?" ]
             , div
                 [ class "ui button"
                 , classList
-                    [ ( "green", model.seasonTrend ) ]
+                    [ ( "green", chartOptions.seasonTrend ) ]
                 , onClick ToggleSeasonTrend
                 ]
                 [ text "Show Season Trend?" ]
             , div
                 [ class "ui button"
                 , classList
-                    [ ( "green", model.ratingFromZero ) ]
+                    [ ( "green", chartOptions.ratingFromZero ) ]
                 , onClick ToggleRatingFromZero
                 ]
                 [ text "Plot Rating from 0?" ]

@@ -34,6 +34,7 @@ type alias Model =
     , query : String
     , show : WebData Show.Model
     , isOpen : Bool
+    , chartOptions : ChartOptions
     }
 
 
@@ -46,6 +47,7 @@ init location =
                 , query = ""
                 , show = NotAsked
                 , isOpen = True
+                , chartOptions = ChartOptions False False True
                 }
 
         cmd2 =
@@ -78,12 +80,12 @@ update msg model =
         ShowResponse (Success show) ->
             let
                 ( showModel, cmd ) =
-                    Show.init show
+                    Show.init show model.chartOptions
             in
             { model | query = show.primaryTitle, show = Success showModel } ! [ cmd ]
 
         ShowResponse show ->
-            { model | show = show |> RemoteData.map (Show.init >> Tuple.first) } ! []
+            { model | show = show |> RemoteData.map (flip Show.init model.chartOptions >> Tuple.first) } ! []
 
         UpdateQuery query ->
             { model | query = query } ! []
@@ -111,10 +113,14 @@ update msg model =
             case model.show of
                 Success show ->
                     let
-                        ( show2, cmd ) =
-                            Show.update msg show
+                        ( show2, cmd, chartOptions ) =
+                            Show.update msg show model.chartOptions
                     in
-                    { model | show = Success show2 } ! [ cmd |> Cmd.map ShowMsg ]
+                    { model
+                        | chartOptions = chartOptions
+                        , show = Success show2
+                    }
+                        ! [ cmd |> Cmd.map ShowMsg ]
 
                 _ ->
                     model ! []
@@ -219,7 +225,7 @@ view model =
             ]
         , case model.show of
             Success show ->
-                Show.view show |> Html.map ShowMsg
+                Show.view show model.chartOptions |> Html.map ShowMsg
 
             _ ->
                 text ""

@@ -20,7 +20,7 @@ function shuffle(array) {
   return array;
 }
 
-function plot({show, ratingFromZero, seasonTrend, showTrend}) {
+function plot([show, {ratingFromZero, seasonTrend, showTrend}]) {
   const colors = shuffle([
     '#1abc9c',
     '#2ecc71',

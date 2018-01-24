@@ -1,6 +1,6 @@
 port module Ports exposing (plot)
 
-import Data exposing (Chart)
+import Data exposing (ChartOptions, Show)
 
 
-port plot : Chart -> Cmd msg
+port plot : ( Show, ChartOptions ) -> Cmd msg

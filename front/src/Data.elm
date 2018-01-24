@@ -28,9 +28,8 @@ type alias Show =
     }
 
 
-type alias Chart =
-    { show : Show
-    , ratingFromZero : Bool
+type alias ChartOptions =
+    { ratingFromZero : Bool
     , showTrend : Bool
     , seasonTrend : Bool
     }
