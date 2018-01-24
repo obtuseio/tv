@@ -200,7 +200,8 @@ fn main() {
 
     std::fs::create_dir_all("data/shows").unwrap();
     for show in shows {
+        let string = serde_json::to_string(&show).unwrap();
         let mut file = File::create(format!("data/shows/{}.json", show.id)).unwrap();
-        serde_json::to_writer(&mut file, &show).unwrap();
+        file.write_all(string.as_bytes()).unwrap();
     }
 }
